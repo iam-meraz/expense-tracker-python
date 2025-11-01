@@ -54,9 +54,6 @@ python app.py
 
 Deployed on PythonAnywhere using Flask WSGI.
 
-## Screenshots
-
-![Expense Tracker](https://via.placeholder.com/800x400?text=Add+Your+Screenshot+Here)
 
 ## Future Enhancements
 
