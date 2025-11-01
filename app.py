@@ -51,6 +51,23 @@ def add_expense():
     return jsonify(new_expense), 201
 
 
+@app.route('/api/expenses/<int:expense_id>', methods=['PUT'])
+def update_expense(expense_id):
+    data = request.json
+    expenses = load_expenses()
+
+    for expense in expenses:
+        if expense['id'] == expense_id:
+            expense['amount'] = float(data['amount'])
+            expense['category'] = data['category']
+            expense['description'] = data['description']
+            expense['date'] = data['date']
+            break
+
+    save_expenses(expenses)
+    return jsonify({'success': True})
+
+
 @app.route('/api/expenses/<int:expense_id>', methods=['DELETE'])
 def delete_expense(expense_id):
     expenses = load_expenses()
