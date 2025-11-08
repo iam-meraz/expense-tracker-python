@@ -9,6 +9,73 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     padding: 20px;
+    transition: background 0.3s ease;
+}
+
+/* Dark Mode - True Dark for Night Use */
+body.dark-mode {
+    background: linear-gradient(135deg, #0a0a0a 0%, #000000 100%);
+}
+
+body.dark-mode header,
+body.dark-mode .card,
+body.dark-mode .chart-card,
+body.dark-mode .transactions-container,
+body.dark-mode .form-container,
+body.dark-mode .voice-result {
+    background: #111111;
+    color: #e0e0e0;
+    border: 1px solid #222222;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode .amount {
+    color: #ffffff;
+}
+
+body.dark-mode .card h3,
+body.dark-mode small {
+    color: #888888;
+}
+
+body.dark-mode .transaction-item {
+    background: #1a1a1a;
+    border: 1px solid #222222;
+}
+
+body.dark-mode .transaction-item:hover {
+    background: #252525;
+}
+
+body.dark-mode .voice-parsed {
+    background: #1a1a1a;
+    border: 1px solid #222222;
+}
+
+body.dark-mode .form-group label {
+    color: #cccccc;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .month-input {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    border-color: #333333;
+}
+
+body.dark-mode .form-group input:focus,
+body.dark-mode .form-group select:focus,
+body.dark-mode .month-input:focus {
+    background: #222222;
+    border-color: #444444;
+    outline: none;
+}
+
+body.dark-mode .no-data {
+    color: #666666;
 }
 
 .container {
@@ -25,11 +92,43 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 h1 {
     color: #333;
     font-size: 2em;
+    transition: color 0.3s ease;
+}
+
+/* Dark Mode Toggle Button */
+.btn-dark-mode {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+}
+
+.btn-dark-mode:hover {
+    background: #d97706;
+    transform: scale(1.05);
+}
+
+body.dark-mode .btn-dark-mode {
+    background: #fbbf24;
+}
+
+body.dark-mode .btn-dark-mode:hover {
+    background: #f59e0b;
 }
 
 .btn-primary {
@@ -55,6 +154,16 @@ h1 {
     border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
+    transition: all 0.3s;
+}
+
+body.dark-mode .btn-secondary {
+    background: #4b5563;
+    color: #e5e7eb;
+}
+
+body.dark-mode .btn-secondary:hover {
+    background: #6b7280;
 }
 
 .btn-delete {
@@ -67,12 +176,151 @@ h1 {
     font-size: 14px;
 }
 
+.btn-edit {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 5px;
+}
+
+.btn-edit:hover {
+    background: #2563eb;
+}
+
+/* Voice Button */
+.btn-voice {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.btn-voice:hover {
+    background: #16a34a;
+    transform: scale(1.05);
+}
+
+.btn-voice:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Voice Recognition Styles */
+.voice-status {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.voice-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.pulse {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+#voiceText {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.voice-hint {
+    font-size: 14px;
+    opacity: 0.9;
+    margin: 15px 0;
+}
+
+.voice-result {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    transition: background 0.3s ease;
+}
+
+.voice-result h3 {
+    color: #22c55e;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.voice-parsed {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    transition: background 0.3s ease;
+}
+
+.voice-parsed p {
+    font-size: 18px;
+    margin: 10px 0;
+    color: #333;
+    transition: color 0.3s ease;
+}
+
+body.dark-mode .voice-parsed p {
+    color: #e5e7eb;
+}
+
+.voice-parsed strong {
+    color: #667eea;
+}
+
+.voice-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Form Styles */
 .form-container {
     background: white;
     padding: 30px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+    transition: background 0.3s ease;
 }
 
 .form-grid {
@@ -91,6 +339,7 @@ h1 {
     margin-bottom: 8px;
     color: #555;
     font-weight: 600;
+    transition: color 0.3s ease;
 }
 
 .form-group input,
@@ -99,6 +348,7 @@ h1 {
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 16px;
+    transition: all 0.3s ease;
 }
 
 .form-actions {
@@ -119,12 +369,14 @@ h1 {
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .card h3 {
     color: #666;
     font-size: 16px;
     margin-bottom: 10px;
+    transition: color 0.3s ease;
 }
 
 .amount {
@@ -132,6 +384,7 @@ h1 {
     font-weight: bold;
     color: #333;
     margin: 10px 0;
+    transition: color 0.3s ease;
 }
 
 .month-input {
@@ -141,6 +394,7 @@ h1 {
     font-size: 16px;
     width: 100%;
     margin-top: 10px;
+    transition: all 0.3s ease;
 }
 
 .charts-container {
@@ -155,11 +409,13 @@ h1 {
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease;
 }
 
 .chart-card h3 {
     margin-bottom: 20px;
     color: #333;
+    transition: color 0.3s ease;
 }
 
 .transactions-container {
@@ -167,11 +423,13 @@ h1 {
     padding: 30px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease;
 }
 
 .transactions-container h3 {
     margin-bottom: 20px;
     color: #333;
+    transition: color 0.3s ease;
 }
 
 .transaction-item {
@@ -214,6 +472,7 @@ h1 {
     text-align: center;
     color: #999;
     padding: 40px;
+    transition: color 0.3s ease;
 }
 
 @media (max-width: 768px) {
@@ -225,18 +484,12 @@ h1 {
     .charts-container {
         grid-template-columns: 1fr;
     }
-}
-.btn-edit {
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-right: 5px;
-}
 
-.btn-edit:hover {
-    background: #2563eb;
+    .voice-actions {
+        flex-direction: column;
+    }
+
+    .voice-actions button {
+        width: 100%;
+    }
 }
