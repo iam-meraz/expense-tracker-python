@@ -51,6 +51,7 @@ body.dark-mode .top-header h1 {
     display: flex;
     gap: 6px;
     align-items: center;
+    position: relative;
 }
 
 .currency-selector {
@@ -88,6 +89,7 @@ body.dark-mode .currency-selector:hover {
     cursor: pointer;
     font-size: 14px;
     transition: all 0.2s;
+    position: relative;
 }
 
 .icon-btn-top:hover {
@@ -96,6 +98,66 @@ body.dark-mode .currency-selector:hover {
 
 body.dark-mode .icon-btn-top {
     background: #1a1a1a;
+}
+
+.user-menu {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 220px;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+body.dark-mode .user-menu {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.user-menu-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+body.dark-mode .user-menu-header {
+    border-bottom-color: #333;
+}
+
+.user-menu-header strong {
+    color: #333;
+    font-size: 14px;
+}
+
+body.dark-mode .user-menu-header strong {
+    color: #fff;
+}
+
+.user-menu-item {
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+    color: #666;
+    transition: background 0.2s;
+}
+
+.user-menu-item:hover {
+    background: #f3f4f6;
+}
+
+body.dark-mode .user-menu-item {
+    color: #ccc;
+}
+
+body.dark-mode .user-menu-item:hover {
+    background: #252525;
 }
 
 .action-btn-top {

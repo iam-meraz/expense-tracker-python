@@ -11,7 +11,7 @@
     <div class="compact-container">
         <!-- Top Header Row -->
         <header class="top-header">
-            <h1>Personal Expense Tracker</h1>
+            <h1>💰 Expense Tracker</h1>
             <div class="top-actions">
                 <select id="displayCurrency" class="currency-selector" onchange="updateDisplay()">
                     <option value="USD">USD $</option>
@@ -35,11 +35,18 @@
                 <button onclick="toggleAddForm()" class="action-btn-top" id="addBtn">
                     + Add Expense
                 </button>
-                <button class="icon-btn-top">👤</button>
+                <button onclick="showUserMenu()" class="icon-btn-top" id="userMenuBtn">👤</button>
+                <div id="userMenu" class="user-menu" style="display: none;">
+                    <div class="user-menu-header">
+                        <strong id="userName">User</strong>
+                        <div id="userEmail" style="font-size: 11px; color: #888;"></div>
+                    </div>
+                    <button onclick="handleLogout()" class="user-menu-item">🚪 Logout</button>
+                </div>
             </div>
         </header>
 
-        <div class="note-text">Integrate with user login system ↑ | Exchange rates updated: <span id="ratesUpdate">Loading...</span></div>
+        <div class="note-text">Exchange rates updated: <span id="ratesUpdate">Loading...</span></div>
 
         <!-- Voice Status (Compact) -->
         <div id="voiceStatus" class="voice-inline" style="display: none;">
@@ -116,7 +123,7 @@
 
         <!-- Main Content Grid -->
         <div class="content-grid">
-            <!-- Recent Transactions (Full Width Top) -->
+            <!-- Recent Transactions -->
             <div class="transactions-box">
                 <h3>Recent Transactions</h3>
                 <div id="transactionsList" class="transactions-scroll"></div>
@@ -152,6 +159,7 @@
             const today = new Date();
             document.getElementById('date').valueAsDate = today;
             generateMonthOptions();
+            loadUserInfo();
             loadExchangeRates();
             document.getElementById('monthSelector').addEventListener('change', updateDisplay);
             document.getElementById('monthlyIncome').addEventListener('change', saveMonthlyIncome);
@@ -160,6 +168,47 @@
             loadCurrencyPreference();
             initVoiceRecognition();
             loadExpenses();
+        });
+
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/user');
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('userName').textContent = user.name;
+                    document.getElementById('userEmail').textContent = user.email;
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        function showUserMenu() {
+            const menu = document.getElementById('userMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function handleLogout() {
+            try {
+                const response = await fetch('/api/logout', { method: 'POST' });
+                if (response.ok) {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+                alert('Logout failed. Please try again.');
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('userMenu');
+            const btn = document.getElementById('userMenuBtn');
+            if (menu && btn && !menu.contains(event.target) && !btn.contains(event.target)) {
+                menu.style.display = 'none';
+            }
         });
 
         async function loadExchangeRates() {
@@ -375,14 +424,21 @@
         }
 
         async function loadExpenses() {
-            const response = await fetch('/api/expenses');
-            expenses = await response.json();
-            // Add default currency to old expenses
-            expenses = expenses.map(e => ({
-                ...e,
-                currency: e.currency || 'USD'
-            }));
-            updateDisplay();
+            try {
+                const response = await fetch('/api/expenses');
+                if (response.ok) {
+                    expenses = await response.json();
+                    expenses = expenses.map(e => ({
+                        ...e,
+                        currency: e.currency || 'USD'
+                    }));
+                    updateDisplay();
+                } else {
+                    console.error('Failed to load expenses');
+                }
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
         }
 
         async function saveExpense() {
@@ -391,30 +447,43 @@
             const category = document.getElementById('category').value;
             const description = document.getElementById('description').value;
             const date = document.getElementById('date').value;
-            if (!amount || !description || !date) { alert('Fill all fields'); return; }
-            const expense = { amount, currency, category, description, date };
-            if (isEditMode) {
-                const expenseId = document.getElementById('editExpenseId').value;
-                await fetch(`/api/expenses/${expenseId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(expense)
-                });
-            } else {
-                await fetch('/api/expenses', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(expense)
-                });
+            if (!amount || !description || !date) {
+                alert('Please fill all fields');
+                return;
             }
-            toggleAddForm();
-            await loadExpenses();
+            const expense = { amount, currency, category, description, date };
+            try {
+                if (isEditMode) {
+                    const expenseId = document.getElementById('editExpenseId').value;
+                    await fetch(`/api/expenses/${expenseId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(expense)
+                    });
+                } else {
+                    await fetch('/api/expenses', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(expense)
+                    });
+                }
+                toggleAddForm();
+                await loadExpenses();
+            } catch (error) {
+                console.error('Error saving expense:', error);
+                alert('Failed to save expense. Please try again.');
+            }
         }
 
         async function deleteExpense(id) {
-            if (confirm('Delete?')) {
-                await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-                await loadExpenses();
+            if (confirm('Delete this expense?')) {
+                try {
+                    await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+                    await loadExpenses();
+                } catch (error) {
+                    console.error('Error deleting expense:', error);
+                    alert('Failed to delete expense. Please try again.');
+                }
             }
         }
 
@@ -439,7 +508,6 @@
             const displayCurrency = document.getElementById('displayCurrency').value;
             const filtered = expenses.filter(e => e.date.startsWith(selectedMonth));
 
-            // Convert all amounts to display currency
             const total = filtered.reduce((sum, e) => {
                 const convertedAmount = convertCurrency(
                     parseFloat(e.amount),
