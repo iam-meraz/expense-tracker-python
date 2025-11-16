@@ -53,6 +53,32 @@ body.dark-mode .top-header h1 {
     align-items: center;
 }
 
+.currency-selector {
+    background: #f3f4f6;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.2s;
+}
+
+.currency-selector:hover {
+    background: #e5e7eb;
+}
+
+body.dark-mode .currency-selector {
+    background: #1a1a1a;
+    color: #ccc;
+    border: 1px solid #333;
+}
+
+body.dark-mode .currency-selector:hover {
+    background: #252525;
+}
+
 .icon-btn-top {
     background: #f3f4f6;
     border: none;

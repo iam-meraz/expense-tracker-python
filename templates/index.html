@@ -13,6 +13,19 @@
         <header class="top-header">
             <h1>Personal Expense Tracker</h1>
             <div class="top-actions">
+                <select id="displayCurrency" class="currency-selector" onchange="updateDisplay()">
+                    <option value="USD">USD $</option>
+                    <option value="EUR">EUR €</option>
+                    <option value="GBP">GBP £</option>
+                    <option value="JPY">JPY ¥</option>
+                    <option value="CNY">CNY ¥</option>
+                    <option value="INR">INR ₹</option>
+                    <option value="KRW">KRW ₩</option>
+                    <option value="BDT">BDT ৳</option>
+                    <option value="AUD">AUD $</option>
+                    <option value="CAD">CAD $</option>
+                    <option value="CHF">CHF Fr</option>
+                </select>
                 <button id="darkModeToggle" onclick="toggleDarkMode()" class="icon-btn-top">
                     <span id="darkModeIcon">🌙</span>
                 </button>
@@ -26,7 +39,7 @@
             </div>
         </header>
 
-        <div class="note-text">Integrate with user login system ↑</div>
+        <div class="note-text">Integrate with user login system ↑ | Exchange rates updated: <span id="ratesUpdate">Loading...</span></div>
 
         <!-- Voice Status (Compact) -->
         <div id="voiceStatus" class="voice-inline" style="display: none;">
@@ -37,7 +50,7 @@
 
         <!-- Voice Result -->
         <div id="voiceResult" class="voice-inline" style="display: none;">
-            <span><strong>$<span id="voiceAmount">0</span></strong> • <span id="voiceCategory">-</span> • <span id="voiceDescription">-</span></span>
+            <span><strong><span id="voiceCurrencySymbol">$</span><span id="voiceAmount">0</span></strong> • <span id="voiceCategory">-</span> • <span id="voiceDescription">-</span></span>
             <div>
                 <button onclick="confirmVoiceExpense()" class="mini-btn success">✓</button>
                 <button onclick="cancelVoiceExpense()" class="mini-btn cancel">✕</button>
@@ -48,6 +61,19 @@
         <div id="expenseForm" class="add-form-inline" style="display: none;">
             <input type="hidden" id="editExpenseId">
             <input type="number" id="amount" step="0.01" placeholder="Amount" class="input-compact">
+            <select id="expenseCurrency" class="input-compact">
+                <option value="USD">USD $</option>
+                <option value="EUR">EUR €</option>
+                <option value="GBP">GBP £</option>
+                <option value="JPY">JPY ¥</option>
+                <option value="CNY">CNY ¥</option>
+                <option value="INR">INR ₹</option>
+                <option value="KRW">KRW ₩</option>
+                <option value="BDT">BDT ৳</option>
+                <option value="AUD">AUD $</option>
+                <option value="CAD">CAD $</option>
+                <option value="CHF">CHF Fr</option>
+            </select>
             <select id="category" class="input-compact">
                 <option>Food & Dining</option>
                 <option>Transportation</option>
@@ -115,18 +141,62 @@
         let isEditMode = false;
         let recognition = null;
         let voiceData = null;
+        let exchangeRates = { base: 'USD', rates: { USD: 1 } };
+
+        const currencySymbols = {
+            'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CNY': '¥',
+            'INR': '₹', 'KRW': '₩', 'BDT': '৳', 'AUD': 'A$', 'CAD': 'C$', 'CHF': 'Fr'
+        };
 
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date();
             document.getElementById('date').valueAsDate = today;
             generateMonthOptions();
+            loadExchangeRates();
             document.getElementById('monthSelector').addEventListener('change', updateDisplay);
             document.getElementById('monthlyIncome').addEventListener('change', saveMonthlyIncome);
             document.getElementById('monthlyIncome').addEventListener('blur', saveMonthlyIncome);
             loadDarkModePreference();
+            loadCurrencyPreference();
             initVoiceRecognition();
             loadExpenses();
         });
+
+        async function loadExchangeRates() {
+            try {
+                const response = await fetch('/api/exchange-rates');
+                exchangeRates = await response.json();
+                const date = new Date(exchangeRates.last_update);
+                document.getElementById('ratesUpdate').textContent = date.toLocaleDateString();
+            } catch (error) {
+                console.error('Failed to load exchange rates:', error);
+                document.getElementById('ratesUpdate').textContent = 'Unavailable';
+            }
+        }
+
+        function convertCurrency(amount, fromCurrency, toCurrency) {
+            if (fromCurrency === toCurrency) return amount;
+            const amountInBase = amount / exchangeRates.rates[fromCurrency];
+            return amountInBase * exchangeRates.rates[toCurrency];
+        }
+
+        function formatCurrency(amount, currency) {
+            const symbol = currencySymbols[currency] || currency;
+            const decimals = (currency === 'JPY' || currency === 'KRW') ? 0 : 2;
+            return `${symbol}${amount.toFixed(decimals)}`;
+        }
+
+        function loadCurrencyPreference() {
+            const savedCurrency = localStorage.getItem('displayCurrency');
+            if (savedCurrency) {
+                document.getElementById('displayCurrency').value = savedCurrency;
+            }
+        }
+
+        function saveCurrencyPreference() {
+            const currency = document.getElementById('displayCurrency').value;
+            localStorage.setItem('displayCurrency', currency);
+        }
 
         function generateMonthOptions() {
             const selector = document.getElementById('monthSelector');
@@ -170,6 +240,7 @@
                 isEditMode = false;
                 document.getElementById('editExpenseId').value = '';
                 document.getElementById('amount').value = '';
+                document.getElementById('expenseCurrency').value = document.getElementById('displayCurrency').value;
                 document.getElementById('category').value = 'Food & Dining';
                 document.getElementById('description').value = '';
                 document.getElementById('date').valueAsDate = new Date();
@@ -179,15 +250,17 @@
 
         function loadMonthlyIncome() {
             const selectedMonth = document.getElementById('monthSelector').value;
-            const incomeKey = 'income_' + selectedMonth;
+            const displayCurrency = document.getElementById('displayCurrency').value;
+            const incomeKey = `income_${selectedMonth}_${displayCurrency}`;
             const savedIncome = localStorage.getItem(incomeKey);
             document.getElementById('monthlyIncome').value = savedIncome || '';
         }
 
         function saveMonthlyIncome() {
             const selectedMonth = document.getElementById('monthSelector').value;
+            const displayCurrency = document.getElementById('displayCurrency').value;
             const income = document.getElementById('monthlyIncome').value;
-            const incomeKey = 'income_' + selectedMonth;
+            const incomeKey = `income_${selectedMonth}_${displayCurrency}`;
             if (income) {
                 localStorage.setItem(incomeKey, income);
             } else {
@@ -235,6 +308,22 @@
             const text = transcript.toLowerCase();
             const amountMatch = text.match(/(\d+(?:\.\d{1,2})?)/);
             const amount = amountMatch ? parseFloat(amountMatch[1]) : 0;
+
+            let currency = document.getElementById('displayCurrency').value;
+            const currencyKeywords = {
+                'dollar': 'USD', 'usd': 'USD',
+                'euro': 'EUR', 'eur': 'EUR',
+                'pound': 'GBP', 'gbp': 'GBP',
+                'yen': 'JPY', 'jpy': 'JPY',
+                'yuan': 'CNY', 'cny': 'CNY',
+                'rupee': 'INR', 'inr': 'INR',
+                'won': 'KRW', 'krw': 'KRW',
+                'taka': 'BDT', 'bdt': 'BDT', 'bangladeshi': 'BDT'
+            };
+            for (const [keyword, curr] of Object.entries(currencyKeywords)) {
+                if (text.includes(keyword)) { currency = curr; break; }
+            }
+
             let category = 'Other';
             const categoryKeywords = {
                 'food': 'Food & Dining', 'groceries': 'Food & Dining', 'restaurant': 'Food & Dining',
@@ -245,10 +334,21 @@
             for (const [keyword, cat] of Object.entries(categoryKeywords)) {
                 if (text.includes(keyword)) { category = cat; break; }
             }
+
             let description = transcript.replace(/add expense/gi, '').replace(/i spent/gi, '')
-                .replace(/dollars?/gi, '').replace(/for/gi, '').trim();
+                .replace(/dollars?/gi, '').replace(/euros?/gi, '').replace(/pounds?/gi, '')
+                .replace(/taka/gi, '').replace(/for/gi, '').trim();
             if (!description) description = category + ' expense';
-            voiceData = { amount, category, description, date: new Date().toISOString().split('T')[0] };
+
+            voiceData = {
+                amount,
+                currency,
+                category,
+                description,
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            document.getElementById('voiceCurrencySymbol').textContent = currencySymbols[currency];
             document.getElementById('voiceAmount').textContent = amount.toFixed(2);
             document.getElementById('voiceCategory').textContent = category;
             document.getElementById('voiceDescription').textContent = description;
@@ -277,16 +377,22 @@
         async function loadExpenses() {
             const response = await fetch('/api/expenses');
             expenses = await response.json();
+            // Add default currency to old expenses
+            expenses = expenses.map(e => ({
+                ...e,
+                currency: e.currency || 'USD'
+            }));
             updateDisplay();
         }
 
         async function saveExpense() {
             const amount = document.getElementById('amount').value;
+            const currency = document.getElementById('expenseCurrency').value;
             const category = document.getElementById('category').value;
             const description = document.getElementById('description').value;
             const date = document.getElementById('date').value;
             if (!amount || !description || !date) { alert('Fill all fields'); return; }
-            const expense = { amount, category, description, date };
+            const expense = { amount, currency, category, description, date };
             if (isEditMode) {
                 const expenseId = document.getElementById('editExpenseId').value;
                 await fetch(`/api/expenses/${expenseId}`, {
@@ -320,6 +426,7 @@
             document.getElementById('addBtn').textContent = '✕ Close';
             document.getElementById('editExpenseId').value = expense.id;
             document.getElementById('amount').value = expense.amount;
+            document.getElementById('expenseCurrency').value = expense.currency || 'USD';
             document.getElementById('category').value = expense.category;
             document.getElementById('description').value = expense.description;
             document.getElementById('date').value = expense.date;
@@ -327,50 +434,77 @@
         }
 
         function updateDisplay() {
+            saveCurrencyPreference();
             const selectedMonth = document.getElementById('monthSelector').value;
+            const displayCurrency = document.getElementById('displayCurrency').value;
             const filtered = expenses.filter(e => e.date.startsWith(selectedMonth));
-            const total = filtered.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+
+            // Convert all amounts to display currency
+            const total = filtered.reduce((sum, e) => {
+                const convertedAmount = convertCurrency(
+                    parseFloat(e.amount),
+                    e.currency || 'USD',
+                    displayCurrency
+                );
+                return sum + convertedAmount;
+            }, 0);
+
             loadMonthlyIncome();
             const income = parseFloat(document.getElementById('monthlyIncome').value) || 0;
             const saved = income - total;
             const savingsPercentage = income > 0 ? ((saved / income) * 100).toFixed(1) : 0;
-            document.getElementById('totalSpending').textContent = `$${total.toFixed(2)}`;
+
+            document.getElementById('totalSpending').textContent = formatCurrency(total, displayCurrency);
             document.getElementById('totalTransactions').textContent = filtered.length;
-            document.getElementById('savedAmount').textContent = `$${saved.toFixed(2)}`;
+            document.getElementById('savedAmount').textContent = formatCurrency(saved, displayCurrency);
             document.getElementById('savingsPercentage').textContent = `${savingsPercentage}%`;
             document.getElementById('savedAmount').style.color = saved >= 0 ? '#22c55e' : '#ef4444';
-            displayTransactions(filtered);
-            updateCharts(filtered);
+
+            displayTransactions(filtered, displayCurrency);
+            updateCharts(filtered, displayCurrency);
         }
 
-        function displayTransactions(filtered) {
+        function displayTransactions(filtered, displayCurrency) {
             const list = document.getElementById('transactionsList');
             if (filtered.length === 0) {
                 list.innerHTML = '<div class="no-data">No expenses this month</div>';
                 return;
             }
             list.innerHTML = filtered.sort((a, b) => new Date(b.date) - new Date(a.date))
-                .map(e => `
-                    <div class="trans-item">
-                        <div class="trans-info">
-                            <strong>$${parseFloat(e.amount).toFixed(2)}</strong>
-                            <span>${e.description}</span>
-                            <span class="trans-cat">${e.category}</span>
-                            <span class="trans-date">${e.date}</span>
+                .map(e => {
+                    const originalCurrency = e.currency || 'USD';
+                    const originalAmount = parseFloat(e.amount);
+                    const convertedAmount = convertCurrency(originalAmount, originalCurrency, displayCurrency);
+                    const showConversion = originalCurrency !== displayCurrency;
+
+                    return `
+                        <div class="trans-item">
+                            <div class="trans-info">
+                                <strong>${formatCurrency(convertedAmount, displayCurrency)}</strong>
+                                <span>${e.description}</span>
+                                <span class="trans-cat">${e.category}</span>
+                                <span class="trans-date">${e.date}${showConversion ? ' • ' + formatCurrency(originalAmount, originalCurrency) : ''}</span>
+                            </div>
+                            <div class="trans-btns">
+                                <button onclick="editExpense(${e.id})" class="mini-btn">✎</button>
+                                <button onclick="deleteExpense(${e.id})" class="mini-btn">✕</button>
+                            </div>
                         </div>
-                        <div class="trans-btns">
-                            <button onclick="editExpense(${e.id})" class="mini-btn">✎</button>
-                            <button onclick="deleteExpense(${e.id})" class="mini-btn">✕</button>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
         }
 
-        function updateCharts(filtered) {
+        function updateCharts(filtered, displayCurrency) {
             const categories = {};
             filtered.forEach(e => {
-                categories[e.category] = (categories[e.category] || 0) + parseFloat(e.amount);
+                const convertedAmount = convertCurrency(
+                    parseFloat(e.amount),
+                    e.currency || 'USD',
+                    displayCurrency
+                );
+                categories[e.category] = (categories[e.category] || 0) + convertedAmount;
             });
+
             const isDark = document.body.classList.contains('dark-mode');
             const textColor = isDark ? '#cccccc' : '#333';
             const gridColor = isDark ? '#222222' : '#e5e7eb';
@@ -398,7 +532,12 @@
             const months = {};
             expenses.forEach(e => {
                 const month = e.date.slice(0, 7);
-                months[month] = (months[month] || 0) + parseFloat(e.amount);
+                const convertedAmount = convertCurrency(
+                    parseFloat(e.amount),
+                    e.currency || 'USD',
+                    displayCurrency
+                );
+                months[month] = (months[month] || 0) + convertedAmount;
             });
             const sortedMonths = Object.keys(months).sort().slice(-6);
             if (trendChart) trendChart.destroy();
@@ -408,7 +547,11 @@
                     type: 'bar',
                     data: {
                         labels: sortedMonths,
-                        datasets: [{ label: 'Spending', data: sortedMonths.map(m => months[m]), backgroundColor: '#8884D8' }]
+                        datasets: [{
+                            label: `Spending (${displayCurrency})`,
+                            data: sortedMonths.map(m => months[m]),
+                            backgroundColor: '#8884D8'
+                        }]
                     },
                     options: {
                         responsive: true,
