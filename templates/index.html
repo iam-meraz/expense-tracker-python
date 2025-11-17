@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Expense Tracker</title>
+    <title>💰 Expense Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -405,16 +405,27 @@
         }
 
         async function confirmVoiceExpense() {
-            if (!voiceData || voiceData.amount === 0) return;
-            const response = await fetch('/api/expenses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(voiceData)
-            });
-            if (response.ok) {
-                document.getElementById('voiceResult').style.display = 'none';
-                voiceData = null;
-                await loadExpenses();
+            if (!voiceData || voiceData.amount === 0) {
+                alert('Invalid voice input. Please try again.');
+                return;
+            }
+            try {
+                const response = await fetch('/api/expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(voiceData)
+                });
+                if (response.ok) {
+                    document.getElementById('voiceResult').style.display = 'none';
+                    voiceData = null;
+                    await loadExpenses();
+                } else {
+                    const error = await response.json();
+                    alert('Failed to add expense: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error adding voice expense:', error);
+                alert('Failed to add expense. Please try again.');
             }
         }
 
@@ -447,28 +458,38 @@
             const category = document.getElementById('category').value;
             const description = document.getElementById('description').value;
             const date = document.getElementById('date').value;
+
             if (!amount || !description || !date) {
                 alert('Please fill all fields');
                 return;
             }
+
             const expense = { amount, currency, category, description, date };
+
             try {
+                let response;
                 if (isEditMode) {
                     const expenseId = document.getElementById('editExpenseId').value;
-                    await fetch(`/api/expenses/${expenseId}`, {
+                    response = await fetch(`/api/expenses/${expenseId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(expense)
                     });
                 } else {
-                    await fetch('/api/expenses', {
+                    response = await fetch('/api/expenses', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(expense)
                     });
                 }
-                toggleAddForm();
-                await loadExpenses();
+
+                if (response.ok) {
+                    toggleAddForm();
+                    await loadExpenses();
+                } else {
+                    const error = await response.json();
+                    alert('Failed to save expense: ' + (error.error || 'Unknown error'));
+                }
             } catch (error) {
                 console.error('Error saving expense:', error);
                 alert('Failed to save expense. Please try again.');
