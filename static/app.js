@@ -16,6 +16,7 @@ let exchangeRates = {
         INR: 89.44,
         KRW: 1467.67,
         BDT: 122.22,
+        NPR: 143.10,
         AUD: 1.53,
         CAD: 1.4,
         CHF: 0.804
@@ -24,7 +25,7 @@ let exchangeRates = {
 
 const currencySymbols = {
     'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'CNY': '¥',
-    'INR': '₹', 'KRW': '₩', 'BDT': '৳', 'AUD': 'A$', 'CAD': 'C$', 'CHF': 'Fr'
+    'INR': '₹', 'KRW': '₩', 'BDT': '৳', 'NPR': 'Rs', 'AUD': 'A$', 'CAD': 'C$', 'CHF': 'Fr'
 };
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -325,7 +326,8 @@ function parseVoiceCommand(transcript) {
         'yuan': 'CNY', 'cny': 'CNY',
         'rupees': 'INR', 'rupee': 'INR', 'inr': 'INR',
         'won': 'KRW', '₩': 'KRW', 'krw': 'KRW',
-        'taka': 'BDT', '৳': 'BDT', 'bdt': 'BDT'
+        'taka': 'BDT', '৳': 'BDT', 'bdt': 'BDT',
+        'nepalese rupees': 'NPR', 'nepalese rupee': 'NPR', 'npr': 'NPR'
     };
 
     for (const [keyword, curr] of Object.entries(currencyKeywords)) {

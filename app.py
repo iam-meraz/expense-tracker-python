@@ -96,7 +96,7 @@ def fetch_exchange_rates():
         'rates': {
             'USD': 1.0, 'EUR': 0.92, 'GBP': 0.79, 'JPY': 149.50,
             'CNY': 7.24, 'INR': 83.12, 'KRW': 1319.50, 'AUD': 1.53,
-            'CAD': 1.36, 'CHF': 0.88, 'BDT': 110.50
+            'CAD': 1.36, 'CHF': 0.88, 'BDT': 110.50, 'NPR': 143.10
         },
         'last_update': datetime.now().isoformat()
     }

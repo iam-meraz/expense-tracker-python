@@ -28,7 +28,7 @@ A web-based expense tracking application built with Python Flask.
 
 ## Supported Currencies
 
-USD, EUR, GBP, JPY, CNY, INR, KRW, BDT, AUD, CAD, CHF
+USD, EUR, GBP, JPY, CNY, INR, KRW, BDT, NPR, AUD, CAD, CHF
 
 ## Categories
 
