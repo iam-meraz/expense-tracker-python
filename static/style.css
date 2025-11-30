@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #f3f4f6;
     padding: 10px;
     min-height: 100vh;
     transition: background 0.3s ease;
@@ -119,21 +119,33 @@ body.dark-mode .user-menu {
 }
 
 .user-menu-header {
-    padding: 12px 16px;
+    padding: 14px 16px;
     border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
 }
 
 body.dark-mode .user-menu-header {
     border-bottom-color: #333;
+    background: #0a0a0a;
 }
 
 .user-menu-header strong {
     color: #333;
     font-size: 14px;
+    display: block;
+    margin-bottom: 2px;
 }
 
 body.dark-mode .user-menu-header strong {
     color: #fff;
+}
+
+.user-menu-header #userEmail {
+    color: #888;
+}
+
+body.dark-mode .user-menu-header #userEmail {
+    color: #666;
 }
 
 .user-menu-item {
@@ -205,6 +217,12 @@ body.dark-mode .voice-inline,
 body.dark-mode .add-form-inline {
     background: #111;
     border: 1px solid #222;
+    color: #e0e0e0;
+}
+
+body.dark-mode .voice-inline span,
+body.dark-mode .voice-inline strong {
+    color: #e0e0e0;
 }
 
 .voice-inline {
@@ -233,6 +251,35 @@ body.dark-mode .add-form-inline {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 12px;
+}
+
+.input-with-rate {
+    position: relative;
+    flex: 1;
+    min-width: 100px;
+    display: flex;
+}
+
+.input-with-rate .input-compact {
+    width: 100%;
+    flex: 1;
+}
+
+.exchange-rate-hint {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: #999;
+    opacity: 0.7;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+body.dark-mode .exchange-rate-hint {
+    color: #666;
 }
 
 body.dark-mode .input-compact {
@@ -481,12 +528,20 @@ body.dark-mode .transactions-box h3 {
     background: #f3f4f6;
 }
 
+.trans-item.income-item {
+    border-left: 3px solid #22c55e;
+}
+
 body.dark-mode .trans-item {
     background: #1a1a1a;
 }
 
 body.dark-mode .trans-item:hover {
     background: #252525;
+}
+
+body.dark-mode .trans-item.income-item strong {
+    color: #22c55e !important;
 }
 
 .trans-info {
