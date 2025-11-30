@@ -34,11 +34,12 @@
                 <button onclick="toggleIncomeForm()" class="action-btn-top" id="addIncomeBtn">💰 Add Income</button>
                 <button onclick="showUserMenu()" class="icon-btn-top" id="userMenuBtn">👤</button>
                 <div id="userMenu" class="user-menu" style="display: none;">
-                    <div class="user-menu-header">
+                <div class="user-menu-header">
                         <strong id="userName">User</strong>
                         <div id="userEmail"></div>
-                    </div>
-                    <button onclick="handleLogout()" class="user-menu-item">🚪 Logout</button>
+                 </div>
+                        <a href="/settings" class="user-menu-item" style="display: block; text-decoration: none; color: inherit;">⚙️ Account Settings</a>
+                        <button onclick="handleLogout()" class="user-menu-item">🚪 Logout</button>
                 </div>
             </div>
         </header>

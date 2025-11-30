@@ -3,7 +3,7 @@
     "id": "1764126464393",
     "name": "Meraz",
     "email": "merzulislm@gmail.com",
-    "password": "scrypt:32768:8:1$EkG1PDJF1dWmXaxN$2c3b583fbada81c58e694e55e1a355264d8aa41609ab2a950d8bbf4a1e919e91c3bd35aad4d9f66aac5b3caab8e7b42d9e72653578fe4e9d9d75f5d1ce25e527",
+    "password": "scrypt:32768:8:1$IgexxTkbyiUHMCtX$eee45f2db8d458d55bb02884c6a0592274eb3890a7f4a46389693792a0cbbc500ed241e4b778ad6e3f840fe7a016f89ce09233dcfce52189760d07ea2d7f5447",
     "created_at": "2025-11-26T12:07:44.510843"
   }
 }

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - 💰 Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .settings-card {
+            background: #111;
+            border: 1px solid #222;
+        }
+
+        .settings-card h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        body.dark-mode .settings-card h2 {
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        body.dark-mode .form-group label {
+            color: #ccc;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group select {
+            background: #1a1a1a;
+            border-color: #333;
+            color: #e0e0e0;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        body.dark-mode .form-group input:disabled {
+            background: #0a0a0a;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+
+        body.dark-mode .alert-success {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        body.dark-mode .alert-error {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        body.dark-mode .alert-info {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .danger-zone {
+            border: 2px solid #ef4444;
+            border-radius: 12px;
+            padding: 20px;
+            background: #fef2f2;
+        }
+
+        body.dark-mode .danger-zone {
+            background: #7f1d1d;
+            border-color: #991b1b;
+        }
+
+        .danger-zone h3 {
+            color: #dc2626;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        body.dark-mode .danger-zone h3 {
+            color: #fca5a5;
+        }
+
+        .danger-zone p {
+            color: #991b1b;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        body.dark-mode .danger-zone p {
+            color: #fca5a5;
+        }
+
+        .info-badge {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        body.dark-mode .info-badge {
+            background: #312e81;
+            color: #c7d2fe;
+        }
+
+        .back-link {
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .hint-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        body.dark-mode .hint-text {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <a href="/" class="btn-secondary back-link">← Back to Dashboard</a>
+
+        <div class="settings-card">
+            <h2>👤 Account Information</h2>
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="userName" disabled>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="userEmail" disabled>
+            </div>
+
+            <div class="form-group">
+                <label>Member Since</label>
+                <input type="text" id="memberSince" disabled>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <h2>🔐 Change Password</h2>
+
+            <div id="passwordAlert"></div>
+
+            <form id="passwordForm" onsubmit="changePassword(event)">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="currentPassword" required>
+                </div>
+
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" required minlength="6">
+                    <div class="hint-text">Minimum 6 characters</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirmPassword" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn-primary" id="passwordBtn">Update Password</button>
+            </form>
+        </div>
+
+        <div class="settings-card">
+            <h2>🔒 Security Question</h2>
+
+            <div id="securityAlert"></div>
+
+            <div id="hasSecurityQuestion" style="display: none;">
+                <div class="alert alert-info">
+                    <strong>✓ Security question is set</strong><br>
+                    This will help you reset your password if you forget it.
+                </div>
+                <button onclick="showUpdateSecurity()" class="btn-secondary">Update Security Question</button>
+            </div>
+
+            <div id="noSecurityQuestion" style="display: none;">
+                <div class="alert alert-error">
+                    <strong>⚠️ No security question set</strong><br>
+                    You won't be able to reset your password if you forget it. Please set a security question.
+                </div>
+                <button onclick="showUpdateSecurity()" class="btn-primary">Set Security Question</button>
+            </div>
+
+            <form id="securityForm" style="display: none;" onsubmit="updateSecurity(event)">
+                <div class="form-group">
+                    <label>Security Question</label>
+                    <select id="securityQuestion" required>
+                        <option value="">Select a security question</option>
+                        <option value="pet">What is your first pet's name?</option>
+                        <option value="city">In which city were you born?</option>
+                        <option value="school">What is your mother's maiden name?</option>
+                        <option value="teacher">What was your first teacher's name?</option>
+                        <option value="food">What is your favorite food?</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Security Answer</label>
+                    <input type="text" id="securityAnswer" required>
+                    <div class="hint-text">This answer is case-insensitive</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Current Password (to verify)</label>
+                    <input type="password" id="securityPassword" required>
+                </div>
+
+                <button type="submit" class="btn-primary" id="securityBtn">Save Security Question</button>
+                <button type="button" onclick="hideUpdateSecurity()" class="btn-secondary">Cancel</button>
+            </form>
+        </div>
+
+        <div class="settings-card">
+            <div class="danger-zone">
+                <h3>⚠️ Danger Zone</h3>
+                <p><strong>Delete Account:</strong> This will permanently delete your account and all associated data. This action cannot be undone.</p>
+                <button onclick="deleteAccount()" class="btn-danger">Delete My Account</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDarkModePreference();
+            loadAccountInfo();
+        });
+
+        function loadDarkModePreference() {
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        async function loadAccountInfo() {
+            try {
+                const response = await fetch('/api/user-details');
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('userName').value = user.name;
+                    document.getElementById('userEmail').value = user.email;
+
+                    if (user.created_at) {
+                        const date = new Date(user.created_at);
+                        document.getElementById('memberSince').value = date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                    } else {
+                        document.getElementById('memberSince').value = 'Unknown';
+                    }
+
+                    // Check if security question is set
+                    if (user.has_security_question) {
+                        document.getElementById('hasSecurityQuestion').style.display = 'block';
+                        document.getElementById('noSecurityQuestion').style.display = 'none';
+                    } else {
+                        document.getElementById('hasSecurityQuestion').style.display = 'none';
+                        document.getElementById('noSecurityQuestion').style.display = 'block';
+                    }
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Failed to load account info:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        function showAlert(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        async function changePassword(event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('passwordBtn');
+
+            if (newPassword !== confirmPassword) {
+                showAlert('passwordAlert', 'New passwords do not match', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showAlert('passwordAlert', 'Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('passwordAlert', '✓ Password updated successfully!', 'success');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    showAlert('passwordAlert', data.error || 'Failed to update password', 'error');
+                }
+            } catch (error) {
+                showAlert('passwordAlert', 'Network error. Please try again.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Update Password';
+        }
+
+        function showUpdateSecurity() {
+            document.getElementById('hasSecurityQuestion').style.display = 'none';
+            document.getElementById('noSecurityQuestion').style.display = 'none';
+            document.getElementById('securityForm').style.display = 'block';
+        }
+
+        function hideUpdateSecurity() {
+            loadAccountInfo();
+            document.getElementById('securityForm').style.display = 'none';
+            document.getElementById('securityForm').reset();
+        }
+
+        async function updateSecurity(event) {
+            event.preventDefault();
+
+            const securityQuestion = document.getElementById('securityQuestion').value;
+            const securityAnswer = document.getElementById('securityAnswer').value;
+            const password = document.getElementById('securityPassword').value;
+            const btn = document.getElementById('securityBtn');
+
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch('/api/update-security', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ securityQuestion, securityAnswer, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('securityAlert', '✓ Security question updated successfully!', 'success');
+                    hideUpdateSecurity();
+                    loadAccountInfo();
+                } else {
+                    showAlert('securityAlert', data.error || 'Failed to update security question', 'error');
+                }
+            } catch (error) {
+                showAlert('securityAlert', 'Network error. Please try again.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Save Security Question';
+        }
+
+        async function deleteAccount() {
+            const confirmed = confirm('⚠️ WARNING: This will permanently delete your account and ALL your data (expenses, income, transactions). This action CANNOT be undone!\n\nType "DELETE" in the next prompt to confirm.');
+
+            if (!confirmed) return;
+
+            const verification = prompt('Please type DELETE in capital letters to confirm:');
+
+            if (verification !== 'DELETE') {
+                alert('Account deletion cancelled.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/delete-account', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    alert('Your account has been permanently deleted.');
+                    window.location.href = '/login';
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to delete account');
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

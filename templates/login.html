@@ -143,7 +143,7 @@
             color: #333;
         }
 
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #e5e7eb;
@@ -152,13 +152,15 @@
             transition: border-color 0.3s, background 0.3s, color 0.3s;
         }
 
-        body.dark-mode .form-group input {
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group select {
             background: #1a1a1a;
             border-color: #333;
             color: #e0e0e0;
         }
 
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -227,6 +229,22 @@
             margin-top: 6px;
         }
 
+        .forgot-password-link {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .forgot-password-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .forgot-password-link a:hover {
+            text-decoration: underline;
+        }
+
         .auth-footer {
             text-align: center;
             padding: 20px 30px;
@@ -270,6 +288,7 @@
         <div class="auth-tabs">
             <button class="auth-tab active" onclick="switchTab('login')">Login</button>
             <button class="auth-tab" onclick="switchTab('register')">Register</button>
+            <button class="auth-tab" onclick="switchTab('reset')">Reset Password</button>
         </div>
 
         <div class="auth-content">
@@ -288,6 +307,10 @@
                 </div>
 
                 <button type="submit" class="submit-btn" id="loginBtn">Login</button>
+
+                <div class="forgot-password-link">
+                    <a onclick="switchTab('reset')">Forgot your password?</a>
+                </div>
             </form>
 
             <!-- Register Form -->
@@ -311,7 +334,60 @@
                     <div class="password-hint">Minimum 6 characters</div>
                 </div>
 
+                <div class="form-group">
+                    <label for="securityQuestion">Security Question</label>
+                    <select id="securityQuestion" required>
+                        <option value="">Select a security question</option>
+                        <option value="pet">What is your first pet's name?</option>
+                        <option value="city">In which city were you born?</option>
+                        <option value="school">What is your mother's maiden name?</option>
+                        <option value="teacher">What was your first teacher's name?</option>
+                        <option value="food">What is your favorite food?</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="securityAnswer">Security Answer</label>
+                    <input type="text" id="securityAnswer" required placeholder="Your answer (case-insensitive)">
+                    <div class="password-hint">This will help you reset your password if you forget it</div>
+                </div>
+
                 <button type="submit" class="submit-btn" id="registerBtn">Create Account</button>
+            </form>
+
+            <!-- Reset Password Form -->
+            <form id="resetForm" class="auth-form" onsubmit="handleReset(event)">
+                <div id="resetError" class="error-message"></div>
+                <div id="resetSuccess" class="success-message"></div>
+
+                <div id="resetStep1">
+                    <div class="form-group">
+                        <label for="resetEmail">Email</label>
+                        <input type="email" id="resetEmail" required placeholder="your.email@example.com">
+                    </div>
+
+                    <button type="button" onclick="verifyEmail()" class="submit-btn" id="verifyBtn">Verify Email</button>
+                </div>
+
+                <div id="resetStep2" style="display: none;">
+                    <div class="form-group">
+                        <label id="resetQuestionLabel">Security Question</label>
+                        <input type="text" id="resetAnswer" required placeholder="Your answer">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" required placeholder="Enter new password" minlength="6">
+                        <div class="password-hint">Minimum 6 characters</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" required placeholder="Confirm new password">
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="resetBtn">Reset Password</button>
+                </div>
             </form>
         </div>
 
@@ -356,7 +432,15 @@
             // Clear error messages
             hideError('loginError');
             hideError('registerError');
+            hideError('resetError');
             hideSuccess('registerSuccess');
+            hideSuccess('resetSuccess');
+
+            // Reset password form steps
+            if (tab === 'reset') {
+                document.getElementById('resetStep1').style.display = 'block';
+                document.getElementById('resetStep2').style.display = 'none';
+            }
         }
 
         function showError(elementId, message) {
@@ -422,6 +506,8 @@
             const name = document.getElementById('registerName').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
+            const securityQuestion = document.getElementById('securityQuestion').value;
+            const securityAnswer = document.getElementById('securityAnswer').value.toLowerCase().trim();
             const btn = document.getElementById('registerBtn');
 
             hideError('registerError');
@@ -433,7 +519,7 @@
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password })
+                    body: JSON.stringify({ name, email, password, securityQuestion, securityAnswer })
                 });
 
                 const data = await response.json();
@@ -452,6 +538,113 @@
                 showError('registerError', 'Network error. Please try again.');
                 btn.disabled = false;
                 btn.textContent = 'Create Account';
+            }
+        }
+
+        let resetUserData = null;
+
+        async function verifyEmail() {
+            const email = document.getElementById('resetEmail').value;
+            const btn = document.getElementById('verifyBtn');
+
+            if (!email) {
+                showError('resetError', 'Please enter your email');
+                return;
+            }
+
+            hideError('resetError');
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                const response = await fetch('/api/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resetUserData = data;
+
+                    // Show security question
+                    const questions = {
+                        'pet': "What is your first pet's name?",
+                        'city': "In which city were you born?",
+                        'school': "What is your mother's maiden name?",
+                        'teacher': "What was your first teacher's name?",
+                        'food': "What is your favorite food?"
+                    };
+
+                    document.getElementById('resetQuestionLabel').textContent = questions[data.securityQuestion];
+                    document.getElementById('resetStep1').style.display = 'none';
+                    document.getElementById('resetStep2').style.display = 'block';
+                } else {
+                    showError('resetError', data.error || 'Email not found');
+                    btn.disabled = false;
+                    btn.textContent = 'Verify Email';
+                }
+            } catch (error) {
+                showError('resetError', 'Network error. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'Verify Email';
+            }
+        }
+
+        async function handleReset(event) {
+            event.preventDefault();
+
+            const answer = document.getElementById('resetAnswer').value.toLowerCase().trim();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('resetBtn');
+
+            hideError('resetError');
+
+            if (newPassword !== confirmPassword) {
+                showError('resetError', 'Passwords do not match');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showError('resetError', 'Password must be at least 6 characters');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Resetting...';
+
+            try {
+                const response = await fetch('/api/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: resetUserData.email,
+                        securityAnswer: answer,
+                        newPassword: newPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('resetSuccess', 'Password reset successful! Redirecting to login...');
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('resetForm').reset();
+                        document.getElementById('resetStep1').style.display = 'block';
+                        document.getElementById('resetStep2').style.display = 'none';
+                    }, 2000);
+                } else {
+                    showError('resetError', data.error || 'Reset failed');
+                    btn.disabled = false;
+                    btn.textContent = 'Reset Password';
+                }
+            } catch (error) {
+                showError('resetError', 'Network error. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'Reset Password';
             }
         }
     </script>

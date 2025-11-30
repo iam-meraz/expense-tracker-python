@@ -307,14 +307,93 @@ function stopVoiceRecognition() {
 
 function parseVoiceCommand(transcript) {
     const text = transcript.toLowerCase();
+    console.log('Raw transcript:', transcript);
 
     // Check if income or expense
     const incomeKeywords = ['received', 'got', 'earned', 'income', 'salary', 'payment', 'paid me', 'gave me', 'gift'];
     const isIncome = incomeKeywords.some(keyword => text.includes(keyword));
 
-    // Extract amount
-    const amountMatch = text.match(/(\d+(?:\.\d{1,2})?)/);
-    const amount = amountMatch ? parseFloat(amountMatch[1]) : 0;
+    // Extract amount with improved number parsing
+    let amount = 0;
+
+    // Convert text numbers to digits
+    const textToNumber = {
+        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
+        'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
+        'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
+        'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19,
+        'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
+        'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
+        'hundred': 100, 'thousand': 1000, 'million': 1000000
+    };
+
+    // Method 1: Look for number with multipliers (e.g., "200 thousand", "5 hundred")
+    const multiplierPattern = /(\d+(?:\.\d+)?)\s*(hundred|thousand|million|lakh|crore)/i;
+    const multiplierMatch = text.match(multiplierPattern);
+
+    if (multiplierMatch) {
+        const baseNumber = parseFloat(multiplierMatch[1]);
+        const multiplier = multiplierMatch[2].toLowerCase();
+
+        const multipliers = {
+            'hundred': 100,
+            'thousand': 1000,
+            'million': 1000000,
+            'lakh': 100000,
+            'crore': 10000000
+        };
+
+        amount = baseNumber * (multipliers[multiplier] || 1);
+        console.log('Found multiplier:', baseNumber, 'x', multiplier, '=', amount);
+    }
+    // Method 2: Look for text numbers (e.g., "twenty five", "one hundred")
+    else {
+        let tempAmount = 0;
+        let currentNumber = 0;
+
+        const words = text.split(/\s+/);
+        for (let i = 0; i < words.length; i++) {
+            const word = words[i];
+            if (textToNumber.hasOwnProperty(word)) {
+                const value = textToNumber[word];
+
+                if (value >= 100) {
+                    // Multiplier (hundred, thousand, etc.)
+                    currentNumber = currentNumber === 0 ? value : currentNumber * value;
+                } else if (value >= 10 && value < 20) {
+                    // Teen numbers
+                    currentNumber += value;
+                } else if (value >= 20) {
+                    // Tens (twenty, thirty, etc.)
+                    currentNumber += value;
+                } else {
+                    // Single digits
+                    currentNumber += value;
+                }
+
+                // Check if next word is also a number or if we're at the end
+                const nextWord = words[i + 1];
+                if (!nextWord || !textToNumber.hasOwnProperty(nextWord)) {
+                    tempAmount += currentNumber;
+                    currentNumber = 0;
+                }
+            }
+        }
+
+        if (tempAmount > 0) {
+            amount = tempAmount;
+            console.log('Parsed text number:', amount);
+        }
+    }
+
+    // Method 3: Simple numeric extraction (fallback)
+    if (amount === 0) {
+        const numericMatch = text.match(/(\d+(?:,\d{3})*(?:\.\d{1,2})?)/);
+        if (numericMatch) {
+            amount = parseFloat(numericMatch[1].replace(/,/g, ''));
+            console.log('Found numeric:', amount);
+        }
+    }
 
     // Detect currency - check specific words first
     let currency = null;
@@ -347,13 +426,22 @@ function parseVoiceCommand(transcript) {
     if (!isIncome) {
         const categoryKeywords = {
             'food': 'Food & Dining', 'lunch': 'Food & Dining', 'dinner': 'Food & Dining',
+            'breakfast': 'Food & Dining', 'meal': 'Food & Dining', 'ate': 'Food & Dining',
             'burger': 'Food & Dining', 'pizza': 'Food & Dining', 'coffee': 'Food & Dining',
+            'restaurant': 'Food & Dining', 'cafe': 'Food & Dining',
             'transport': 'Transportation', 'uber': 'Transportation', 'taxi': 'Transportation',
-            'bus': 'Transportation', 'train': 'Transportation',
-            'shopping': 'Shopping', 'clothes': 'Shopping',
-            'entertainment': 'Entertainment', 'movie': 'Entertainment',
-            'bills': 'Bills & Utilities', 'rent': 'Bills & Utilities',
-            'healthcare': 'Healthcare', 'doctor': 'Healthcare'
+            'bus': 'Transportation', 'train': 'Transportation', 'flight': 'Transportation',
+            'gas': 'Transportation', 'fuel': 'Transportation', 'parking': 'Transportation',
+            'shopping': 'Shopping', 'clothes': 'Shopping', 'bought': 'Shopping',
+            'shoes': 'Shopping', 'shirt': 'Shopping',
+            'entertainment': 'Entertainment', 'movie': 'Entertainment', 'game': 'Entertainment',
+            'concert': 'Entertainment', 'show': 'Entertainment',
+            'bills': 'Bills & Utilities', 'rent': 'Bills & Utilities', 'electricity': 'Bills & Utilities',
+            'water': 'Bills & Utilities', 'internet': 'Bills & Utilities', 'phone': 'Bills & Utilities',
+            'healthcare': 'Healthcare', 'doctor': 'Healthcare', 'medicine': 'Healthcare',
+            'hospital': 'Healthcare', 'pharmacy': 'Healthcare',
+            'education': 'Education', 'school': 'Education', 'course': 'Education',
+            'book': 'Education', 'tuition': 'Education'
         };
         for (const [keyword, cat] of Object.entries(categoryKeywords)) {
             if (text.includes(keyword)) {
@@ -363,20 +451,40 @@ function parseVoiceCommand(transcript) {
         }
     }
 
-    // Clean description
+    // Clean description - keep the original transcript but remove numbers and currency words
     let description = transcript;
-    const phrasesToRemove = ['i spent', 'i received', 'i got', 'i earned', 'for', 'on'];
+
+    // Remove common phrases
+    const phrasesToRemove = [
+        'i spent', 'i received', 'i got', 'i earned', 'i paid', 'i bought',
+        'for a', 'for the', 'for', 'on a', 'on the', 'on'
+    ];
+
     phrasesToRemove.forEach(phrase => {
-        const regex = new RegExp(phrase, 'gi');
+        const regex = new RegExp('\\b' + phrase + '\\b', 'gi');
         description = description.replace(regex, '');
     });
-    description = description.replace(/\d+(\.\d{1,2})?/g, '').trim();
-    description = description.replace(/dollars?|euros?|pounds?|taka|rupees?|won|yen/gi, '').trim();
+
+    // Remove numbers (with multipliers)
+    description = description.replace(/\d+(?:\.\d+)?\s*(hundred|thousand|million|lakh|crore)?/gi, '');
+
+    // Remove currency words
+    description = description.replace(/\b(dollars?|euros?|pounds?|taka|rupees?|won|yen|yuan)\b/gi, '');
+
+    // Clean up extra spaces
     description = description.replace(/\s+/g, ' ').trim();
 
+    // Capitalize first letter
+    if (description) {
+        description = description.charAt(0).toUpperCase() + description.slice(1);
+    }
+
+    // If description is too short or empty, use a default
     if (!description || description.length < 3) {
         description = isIncome ? 'Income received' : category + ' expense';
     }
+
+    console.log('Final parsed:', { amount, currency, category, description, isIncome });
 
     voiceData = {
         amount,

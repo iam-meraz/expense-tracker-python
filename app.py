@@ -129,9 +129,14 @@ def register():
         email = data.get('email', '').lower().strip()
         password = data.get('password', '')
         name = data.get('name', '').strip()
+        security_question = data.get('securityQuestion', '')
+        security_answer = data.get('securityAnswer', '').lower().strip()
 
         if not email or not password or not name:
             return jsonify({'error': 'All fields required'}), 400
+
+        if not security_question or not security_answer:
+            return jsonify({'error': 'Security question and answer required'}), 400
 
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
@@ -147,6 +152,8 @@ def register():
             'name': name,
             'email': email,
             'password': generate_password_hash(password),
+            'security_question': security_question,
+            'security_answer': security_answer,  # Stored as lowercase for case-insensitive comparison
             'created_at': datetime.now().isoformat()
         }
 
@@ -160,6 +167,68 @@ def register():
     except Exception as e:
         print(f"Registration error: {e}")
         return jsonify({'error': 'Registration failed'}), 500
+
+    @app.route('/api/verify-email', methods=['POST'])
+    def verify_email():
+        """Verify email and return security question"""
+        try:
+            data = request.json
+            email = data.get('email', '').lower().strip()
+
+            if not email:
+                return jsonify({'error': 'Email required'}), 400
+
+            users = load_json(USERS_FILE)
+
+            if email not in users:
+                return jsonify({'error': 'Email not found'}), 404
+
+            user = users[email]
+
+            # Return email and security question (but not the answer)
+            return jsonify({
+                'email': email,
+                'securityQuestion': user.get('security_question', 'pet')
+            }), 200
+        except Exception as e:
+            print(f"Verify email error: {e}")
+            return jsonify({'error': 'Verification failed'}), 500
+
+    @app.route('/api/reset-password', methods=['POST'])
+    def reset_password():
+        """Reset password using security answer"""
+        try:
+            data = request.json
+            email = data.get('email', '').lower().strip()
+            security_answer = data.get('securityAnswer', '').lower().strip()
+            new_password = data.get('newPassword', '')
+
+            if not email or not security_answer or not new_password:
+                return jsonify({'error': 'All fields required'}), 400
+
+            if len(new_password) < 6:
+                return jsonify({'error': 'Password must be at least 6 characters'}), 400
+
+            users = load_json(USERS_FILE)
+
+            if email not in users:
+                return jsonify({'error': 'Email not found'}), 404
+
+            user = users[email]
+
+            # Verify security answer (case-insensitive)
+            stored_answer = user.get('security_answer', '').lower().strip()
+            if security_answer != stored_answer:
+                return jsonify({'error': 'Incorrect security answer'}), 401
+
+            # Update password
+            users[email]['password'] = generate_password_hash(new_password)
+            save_json(USERS_FILE, users)
+
+            return jsonify({'success': True}), 200
+        except Exception as e:
+            print(f"Reset password error: {e}")
+            return jsonify({'error': 'Password reset failed'}), 500
 
 
 @app.route('/api/login', methods=['POST'])
@@ -206,6 +275,140 @@ def get_user():
         'name': session.get('user_name'),
         'email': session.get('user_email')
     })
+
+
+# Add these routes to your app.py file (after the logout route)
+
+@app.route('/settings')
+@login_required
+def settings_page():
+    """Render settings page"""
+    return render_template('settings.html')
+
+
+@app.route('/api/user-details')
+@login_required
+def get_user_details():
+    """Get detailed user information including security question status"""
+    try:
+        user_id = session.get('user_id')
+        user_email = session.get('user_email')
+
+        users = load_json(USERS_FILE)
+        user = users.get(user_email, {})
+
+        return jsonify({
+            'id': user.get('id'),
+            'name': user.get('name'),
+            'email': user.get('email'),
+            'created_at': user.get('created_at'),
+            'has_security_question': 'security_question' in user and 'security_answer' in user
+        }), 200
+    except Exception as e:
+        print(f"Error getting user details: {e}")
+        return jsonify({'error': 'Failed to load user details'}), 500
+
+
+@app.route('/api/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """Change user password"""
+    try:
+        data = request.json
+        current_password = data.get('currentPassword', '')
+        new_password = data.get('newPassword', '')
+
+        if not current_password or not new_password:
+            return jsonify({'error': 'All fields required'}), 400
+
+        if len(new_password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+
+        user_email = session.get('user_email')
+        users = load_json(USERS_FILE)
+
+        if user_email not in users:
+            return jsonify({'error': 'User not found'}), 404
+
+        user = users[user_email]
+
+        # Verify current password
+        if not check_password_hash(user['password'], current_password):
+            return jsonify({'error': 'Current password is incorrect'}), 401
+
+        # Update password
+        users[user_email]['password'] = generate_password_hash(new_password)
+        save_json(USERS_FILE, users)
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print(f"Password change error: {e}")
+        return jsonify({'error': 'Failed to change password'}), 500
+
+
+@app.route('/api/update-security', methods=['POST'])
+@login_required
+def update_security():
+    """Update security question and answer"""
+    try:
+        data = request.json
+        security_question = data.get('securityQuestion', '')
+        security_answer = data.get('securityAnswer', '').lower().strip()
+        password = data.get('password', '')
+
+        if not security_question or not security_answer or not password:
+            return jsonify({'error': 'All fields required'}), 400
+
+        user_email = session.get('user_email')
+        users = load_json(USERS_FILE)
+
+        if user_email not in users:
+            return jsonify({'error': 'User not found'}), 404
+
+        user = users[user_email]
+
+        # Verify password
+        if not check_password_hash(user['password'], password):
+            return jsonify({'error': 'Password is incorrect'}), 401
+
+        # Update security question and answer
+        users[user_email]['security_question'] = security_question
+        users[user_email]['security_answer'] = security_answer
+        save_json(USERS_FILE, users)
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print(f"Security update error: {e}")
+        return jsonify({'error': 'Failed to update security question'}), 500
+
+
+@app.route('/api/delete-account', methods=['DELETE'])
+@login_required
+def delete_account():
+    """Delete user account and all associated data"""
+    try:
+        user_id = session.get('user_id')
+        user_email = session.get('user_email')
+
+        # Delete user from users.json
+        users = load_json(USERS_FILE)
+        if user_email in users:
+            del users[user_email]
+            save_json(USERS_FILE, users)
+
+        # Delete user's expenses
+        expenses = load_json(EXPENSES_FILE)
+        if str(user_id) in expenses:
+            del expenses[str(user_id)]
+            save_json(EXPENSES_FILE, expenses)
+
+        # Clear session
+        session.clear()
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print(f"Account deletion error: {e}")
+        return jsonify({'error': 'Failed to delete account'}), 500
 
 
 @app.route('/api/exchange-rates')
