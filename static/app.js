@@ -773,16 +773,33 @@ function updateCharts(filtered, displayCurrency) {
     const textColor = isDark ? '#cccccc' : '#333';
     const gridColor = isDark ? '#222222' : '#e5e7eb';
 
+    // Define fixed colors for each category with better contrast
+    const categoryColors = {
+        'Food & Dining': '#10B981',      // Emerald Green (vibrant)
+        'Transportation': '#F59E0B',     // Amber/Orange
+        'Shopping': '#8B5CF6',           // Purple
+        'Entertainment': '#EC4899',      // Pink
+        'Bills & Utilities': '#3B82F6',  // Blue
+        'Healthcare': '#EF4444',         // Red
+        'Education': '#06B6D4',          // Cyan/Turquoise (very different from green!)
+        'Other': '#F97316'               // Deep Orange
+    };
+
     if (categoryChart) categoryChart.destroy();
     if (Object.keys(categories).length > 0) {
         const ctx1 = document.getElementById('categoryChart').getContext('2d');
+
+        // Map categories to their fixed colors
+        const chartLabels = Object.keys(categories);
+        const chartColors = chartLabels.map(cat => categoryColors[cat] || '#6B7280');
+
         categoryChart = new Chart(ctx1, {
             type: 'doughnut',
             data: {
-                labels: Object.keys(categories),
+                labels: chartLabels,
                 datasets: [{
                     data: Object.values(categories),
-                    backgroundColor: ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B9D']
+                    backgroundColor: chartColors  // Use fixed colors
                 }]
             },
             options: {
@@ -793,6 +810,7 @@ function updateCharts(filtered, displayCurrency) {
         });
     }
 
+    // Monthly trend chart (same as before)
     const months = {};
     expenses.forEach(e => {
         const amount = parseFloat(e.amount);
@@ -814,7 +832,7 @@ function updateCharts(filtered, displayCurrency) {
                 datasets: [{
                     label: `Spending (${displayCurrency})`,
                     data: sortedMonths.map(m => months[m]),
-                    backgroundColor: '#8884D8'
+                    backgroundColor: '#8B5CF6'  // Purple to match theme
                 }]
             },
             options: {
