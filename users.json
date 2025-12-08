@@ -1,9 +1,0 @@
-{
-  "merzulislm@gmail.com": {
-    "id": "1764126464393",
-    "name": "Meraz",
-    "email": "merzulislm@gmail.com",
-    "password": "scrypt:32768:8:1$IgexxTkbyiUHMCtX$eee45f2db8d458d55bb02884c6a0592274eb3890a7f4a46389693792a0cbbc500ed241e4b778ad6e3f840fe7a016f89ce09233dcfce52189760d07ea2d7f5447",
-    "created_at": "2025-11-26T12:07:44.510843"
-  }
-}
