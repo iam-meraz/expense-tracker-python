@@ -30,10 +30,15 @@ const currencySymbols = {
 
 document.addEventListener('DOMContentLoaded', async function() {
     const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayString = `${year}-${month}-${day}`;
+
     const dateInput = document.getElementById('date');
     const incomeDateInput = document.getElementById('incomeDate');
-    if (dateInput) dateInput.valueAsDate = today;
-    if (incomeDateInput) incomeDateInput.valueAsDate = today;
+    if (dateInput) dateInput.value = todayString;
+    if (incomeDateInput) incomeDateInput.value = todayString;
 
     generateMonthOptions();
     loadUserInfo();
@@ -41,7 +46,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     loadCurrencyPreference();
     initVoiceRecognition();
 
-    // CRITICAL: Load exchange rates BEFORE expenses
     await loadExchangeRates();
     await loadExpenses();
 });
@@ -126,16 +130,22 @@ function formatCurrency(amount, currency) {
 function generateMonthOptions() {
     const selector = document.getElementById('monthSelector');
     const today = new Date();
+    const currentYearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     const months = [];
+
+    // Generate months from 12 months ago to 12 months in future
     for (let i = -12; i <= 12; i++) {
         const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        const yearMonth = date.toISOString().slice(0, 7);
+        const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         months.push({ value: yearMonth, label: monthName });
     }
+
+    // Build options HTML with current month selected
     selector.innerHTML = months.map(m =>
-        `<option value="${m.value}" ${m.value === today.toISOString().slice(0, 7) ? 'selected' : ''}>${m.label}</option>`
+        `<option value="${m.value}" ${m.value === currentYearMonth ? 'selected' : ''}>${m.label}</option>`
     ).join('');
+
     selector.addEventListener('change', updateDisplay);
 }
 
@@ -598,6 +608,12 @@ async function saveExpense() {
         if (response.ok) {
             toggleAddForm();
             await loadExpenses();
+
+            // Force month selector to show the expense's month
+            const expenseMonth = date.slice(0, 7);
+            const monthSelector = document.getElementById('monthSelector');
+            monthSelector.value = expenseMonth;
+            updateDisplay();
         } else {
             alert('Failed to save expense');
         }
@@ -638,6 +654,12 @@ async function saveIncome() {
         if (response.ok) {
             toggleIncomeForm();
             await loadExpenses();
+
+            // Force month selector to show the income's month
+            const incomeMonth = date.slice(0, 7);
+            const monthSelector = document.getElementById('monthSelector');
+            monthSelector.value = incomeMonth;
+            updateDisplay();
         } else {
             alert('Failed to save income');
         }
@@ -691,8 +713,19 @@ function editIncome(id) {
 
 function updateDisplay() {
     saveCurrencyPreference();
-    const selectedMonth = document.getElementById('monthSelector').value;
+
+    // Get the selected month from dropdown
+    const monthSelector = document.getElementById('monthSelector');
+    const selectedMonth = monthSelector.value;
     const displayCurrency = document.getElementById('displayCurrency').value;
+
+    // If no expenses exist yet, make sure we're viewing current month
+    if (expenses.length === 0) {
+        const today = new Date();
+        const currentMonth = today.toISOString().slice(0, 7);
+        monthSelector.value = currentMonth;
+    }
+
     const filtered = expenses.filter(e => e.date.startsWith(selectedMonth));
 
     let totalIncome = 0;
