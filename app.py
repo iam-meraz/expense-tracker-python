@@ -168,67 +168,69 @@ def register():
         print(f"Registration error: {e}")
         return jsonify({'error': 'Registration failed'}), 500
 
-    @app.route('/api/verify-email', methods=['POST'])
-    def verify_email():
-        """Verify email and return security question"""
-        try:
-            data = request.json
-            email = data.get('email', '').lower().strip()
 
-            if not email:
-                return jsonify({'error': 'Email required'}), 400
+@app.route('/api/verify-email', methods=['POST'])
+def verify_email():
+    """Verify email and return security question"""
+    try:
+        data = request.json
+        email = data.get('email', '').lower().strip()
 
-            users = load_json(USERS_FILE)
+        if not email:
+            return jsonify({'error': 'Email required'}), 400
 
-            if email not in users:
-                return jsonify({'error': 'Email not found'}), 404
+        users = load_json(USERS_FILE)
 
-            user = users[email]
+        if email not in users:
+            return jsonify({'error': 'Email not found'}), 404
 
-            # Return email and security question (but not the answer)
-            return jsonify({
-                'email': email,
-                'securityQuestion': user.get('security_question', 'pet')
-            }), 200
-        except Exception as e:
-            print(f"Verify email error: {e}")
-            return jsonify({'error': 'Verification failed'}), 500
+        user = users[email]
 
-    @app.route('/api/reset-password', methods=['POST'])
-    def reset_password():
-        """Reset password using security answer"""
-        try:
-            data = request.json
-            email = data.get('email', '').lower().strip()
-            security_answer = data.get('securityAnswer', '').lower().strip()
-            new_password = data.get('newPassword', '')
+        # Return email and security question (but not the answer)
+        return jsonify({
+            'email': email,
+            'securityQuestion': user.get('security_question', 'pet')
+        }), 200
+    except Exception as e:
+        print(f"Verify email error: {e}")
+        return jsonify({'error': 'Verification failed'}), 500
 
-            if not email or not security_answer or not new_password:
-                return jsonify({'error': 'All fields required'}), 400
 
-            if len(new_password) < 6:
-                return jsonify({'error': 'Password must be at least 6 characters'}), 400
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    """Reset password using security answer"""
+    try:
+        data = request.json
+        email = data.get('email', '').lower().strip()
+        security_answer = data.get('securityAnswer', '').lower().strip()
+        new_password = data.get('newPassword', '')
 
-            users = load_json(USERS_FILE)
+        if not email or not security_answer or not new_password:
+            return jsonify({'error': 'All fields required'}), 400
 
-            if email not in users:
-                return jsonify({'error': 'Email not found'}), 404
+        if len(new_password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
 
-            user = users[email]
+        users = load_json(USERS_FILE)
 
-            # Verify security answer (case-insensitive)
-            stored_answer = user.get('security_answer', '').lower().strip()
-            if security_answer != stored_answer:
-                return jsonify({'error': 'Incorrect security answer'}), 401
+        if email not in users:
+            return jsonify({'error': 'Email not found'}), 404
 
-            # Update password
-            users[email]['password'] = generate_password_hash(new_password)
-            save_json(USERS_FILE, users)
+        user = users[email]
 
-            return jsonify({'success': True}), 200
-        except Exception as e:
-            print(f"Reset password error: {e}")
-            return jsonify({'error': 'Password reset failed'}), 500
+        # Verify security answer (case-insensitive)
+        stored_answer = user.get('security_answer', '').lower().strip()
+        if security_answer != stored_answer:
+            return jsonify({'error': 'Incorrect security answer'}), 401
+
+        # Update password
+        users[email]['password'] = generate_password_hash(new_password)
+        save_json(USERS_FILE, users)
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print(f"Reset password error: {e}")
+        return jsonify({'error': 'Password reset failed'}), 500
 
 
 @app.route('/api/login', methods=['POST'])
